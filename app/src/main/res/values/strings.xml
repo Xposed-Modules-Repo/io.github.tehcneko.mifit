@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">MiFit Hook</string>
+    <string name="xposed_description">Let MiFit treat Nekogram and Catogram as Telegram.</string>
+    <string-array name="scope">
+        <item>com.xiaomi.hm.health</item>
+    </string-array>
+</resources>
