@@ -1,6 +1,11 @@
 package io.github.tehcneko.mifit;
 
+import android.app.Application;
+import android.content.Context;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
 import android.util.Log;
+import android.util.Pair;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -12,16 +17,18 @@ import dalvik.system.BaseDexClassLoader;
 import dalvik.system.DexFile;
 import de.robv.android.xposed.IXposedHookLoadPackage;
 import de.robv.android.xposed.XC_MethodHook;
+import de.robv.android.xposed.XC_MethodReplacement;
 import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
 import de.robv.android.xposed.callbacks.XC_LoadPackage;
 
 public class MiFitHook implements IXposedHookLoadPackage {
     private static final String TAG = "MiFitHook";
+    private static final String PACKAGE_NAME = "com.xiaomi.hm.health";
 
     @Override
     public void handleLoadPackage(XC_LoadPackage.LoadPackageParam loadPackageParam) {
-        if (loadPackageParam.packageName.equals("com.xiaomi.hm.health")) {
+        if (loadPackageParam.packageName.equals(PACKAGE_NAME)) {
             Log.d(TAG, "handleLoadPackage");
             var packageMapClass = findPackageMapClass(loadPackageParam.classLoader);
             if (packageMapClass != null) {
@@ -44,7 +51,45 @@ public class MiFitHook implements IXposedHookLoadPackage {
                     XposedBridge.log(t);
                 }
             }
+
+            XposedHelpers.findAndHookMethod(Application.class, "attach", Context.class, new XC_MethodHook() {
+                @Override
+                protected void afterHookedMethod(MethodHookParam param) {
+                    int versionCode = getAppVersionCode((Context) param.args[0]);
+                    var languageMethod = findLanguageMethod(versionCode);
+                    if (languageMethod != null) {
+                        try {
+                            XposedHelpers.findAndHookMethod(languageMethod.first, loadPackageParam.classLoader, languageMethod.second, XC_MethodReplacement.returnConstant(false));
+                        } catch (Throwable t) {
+                            XposedBridge.log(t);
+                        }
+                    }
+                }
+            });
         }
+    }
+
+    private int getAppVersionCode(Context context) {
+        try {
+            PackageInfo packageInfo = context.getPackageManager().getPackageInfo(PACKAGE_NAME, 0);
+            return packageInfo.versionCode;
+        } catch (PackageManager.NameNotFoundException e) {
+            e.printStackTrace();
+            return 0;
+        }
+    }
+
+    private Pair<String, String> findLanguageMethod(int versionCode) {
+        try {
+            Log.e(TAG, versionCode + "");
+            if (ClassMaps.languageClassMap.containsKey(versionCode)) {
+                return ClassMaps.languageClassMap.get(versionCode);
+            }
+        } catch (Throwable t) {
+            XposedBridge.log(t);
+        }
+        XposedBridge.log("language class not found");
+        return null;
     }
 
     private Class<?> findPackageMapClass(ClassLoader classLoader) {
