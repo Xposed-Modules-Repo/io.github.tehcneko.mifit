@@ -1,2 +1,2 @@
 # MiFit Hook
-Let MiFit treat Nekogram and Catogram as Telegram.<
+Let MiFit treat Nekogram and Catogram as Telegram.
