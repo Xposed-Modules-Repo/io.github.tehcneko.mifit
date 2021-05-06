@@ -81,9 +81,10 @@ public class MiFitHook implements IXposedHookLoadPackage {
 
     private Pair<String, String> findLanguageMethod(int versionCode) {
         try {
-            Log.e(TAG, versionCode + "");
             if (ClassMaps.languageClassMap.containsKey(versionCode)) {
                 return ClassMaps.languageClassMap.get(versionCode);
+            } else {
+                return ClassMaps.languageClassMap.get(ClassMaps.maxSupportedVersion);
             }
         } catch (Throwable t) {
             XposedBridge.log(t);
