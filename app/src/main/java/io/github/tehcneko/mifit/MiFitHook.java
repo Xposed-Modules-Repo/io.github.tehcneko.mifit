@@ -24,11 +24,10 @@ import de.robv.android.xposed.callbacks.XC_LoadPackage;
 
 public class MiFitHook implements IXposedHookLoadPackage {
     private static final String TAG = "MiFitHook";
-    private static final String PACKAGE_NAME = "com.xiaomi.hm.health";
 
     @Override
     public void handleLoadPackage(XC_LoadPackage.LoadPackageParam loadPackageParam) {
-        if (loadPackageParam.packageName.equals(PACKAGE_NAME)) {
+        if (loadPackageParam.packageName.equals("com.xiaomi.hm.health")) {
             Log.d(TAG, "handleLoadPackage");
 
             XposedHelpers.findAndHookMethod(Application.class, "attach", Context.class, new XC_MethodHook() {
@@ -72,7 +71,7 @@ public class MiFitHook implements IXposedHookLoadPackage {
 
     private int getAppVersionCode(Context context) {
         try {
-            PackageInfo packageInfo = context.getPackageManager().getPackageInfo(PACKAGE_NAME, 0);
+            PackageInfo packageInfo = context.getPackageManager().getPackageInfo(context.getPackageName(), 0);
             return packageInfo.versionCode;
         } catch (PackageManager.NameNotFoundException e) {
             e.printStackTrace();

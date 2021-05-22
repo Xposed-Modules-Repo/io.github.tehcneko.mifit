@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">小米运动 Hook</string>
-    <string name="xposed_description">去除广告，以及让小米运动将 Nekogram 与 Catogram 视为 Telegram。\n只支持 Play 版。</string>
+    <string name="xposed_description">去除广告，以及让小米运动将 Nekogram 与 Catogram 视为 Telegram。</string>
 </resources>
