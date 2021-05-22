@@ -30,31 +30,32 @@ public class MiFitHook implements IXposedHookLoadPackage {
     public void handleLoadPackage(XC_LoadPackage.LoadPackageParam loadPackageParam) {
         if (loadPackageParam.packageName.equals(PACKAGE_NAME)) {
             Log.d(TAG, "handleLoadPackage");
-            var packageMapClass = findPackageMapClass(loadPackageParam.classLoader);
-            if (packageMapClass != null) {
-                try {
-                    XposedHelpers.findAndHookConstructor(packageMapClass, new XC_MethodHook() {
-                        @Override
-                        protected void afterHookedMethod(MethodHookParam param) {
-                            //noinspection unchecked
-                            var hashMap = (HashMap<String, Object>) param.thisObject;
-                            var telegramIcon = hashMap.get("org.telegram.messenger");
-                            if (telegramIcon != null) {
-                                hashMap.put("tw.nekomimi.nekogram", telegramIcon);
-                                hashMap.put("tw.nekomimi.nekogram.beta", telegramIcon);
-                                hashMap.put("ua.itaysonlab.messenger", telegramIcon);
-                                Log.d(TAG, "map content: " + hashMap.toString());
-                            }
-                        }
-                    });
-                } catch (Throwable t) {
-                    XposedBridge.log(t);
-                }
-            }
 
             XposedHelpers.findAndHookMethod(Application.class, "attach", Context.class, new XC_MethodHook() {
                 @Override
                 protected void afterHookedMethod(MethodHookParam param) {
+                    var packageMapClass = findPackageMapClass(loadPackageParam.classLoader);
+                    if (packageMapClass != null) {
+                        try {
+                            XposedHelpers.findAndHookConstructor(packageMapClass, new XC_MethodHook() {
+                                @Override
+                                protected void afterHookedMethod(MethodHookParam param) {
+                                    //noinspection unchecked
+                                    var hashMap = (HashMap<String, Object>) param.thisObject;
+                                    var telegramIcon = hashMap.get("org.telegram.messenger");
+                                    if (telegramIcon != null) {
+                                        hashMap.put("tw.nekomimi.nekogram", telegramIcon);
+                                        hashMap.put("tw.nekomimi.nekogram.beta", telegramIcon);
+                                        hashMap.put("ua.itaysonlab.messenger", telegramIcon);
+                                        Log.d(TAG, "map content: " + hashMap.toString());
+                                    }
+                                }
+                            });
+                        } catch (Throwable t) {
+                            XposedBridge.log(t);
+                        }
+                    }
+
                     int versionCode = getAppVersionCode((Context) param.args[0]);
                     var languageMethod = findLanguageMethod(versionCode);
                     if (languageMethod != null) {
