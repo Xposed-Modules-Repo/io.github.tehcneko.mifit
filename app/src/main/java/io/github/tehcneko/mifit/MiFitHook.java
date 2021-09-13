@@ -46,7 +46,7 @@ public class MiFitHook implements IXposedHookLoadPackage {
                                         hashMap.put("tw.nekomimi.nekogram", telegramIcon);
                                         hashMap.put("tw.nekomimi.nekogram.beta", telegramIcon);
                                         hashMap.put("ua.itaysonlab.messenger", telegramIcon);
-                                        Log.d(TAG, "map content: " + hashMap.toString());
+                                        Log.d(TAG, "map content: " + hashMap);
                                     }
                                 }
                             });
