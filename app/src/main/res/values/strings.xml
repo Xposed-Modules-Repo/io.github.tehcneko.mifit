@@ -1,6 +1,9 @@
 <resources>
-    <string name="app_name">MiFit Hooks</string>
-    <string name="xposed_description">Let MiFit treat Nekogram and Catogram as Telegram.</string>
+    <string name="app_name">Zepp Life Hooks</string>
+    <string name="xposed_description">Let Zepp Life treat third-party telegram clients as official Telegram.</string>
+    <string name="unsupported_title">Unsupported Zepp Life version</string>
+    <string name="unsupported_message">minimum supported version: %s (%d).</string>
+    <string name="unsupported_message_notfound">failed to find package map.</string>
     <string-array name="scope">
         <item>com.xiaomi.hm.health</item>
     </string-array>

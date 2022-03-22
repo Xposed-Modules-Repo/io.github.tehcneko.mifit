@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">小米运动 Hooks</string>
-    <string name="xposed_description">去除广告，以及让小米运动将 Nekogram 与 Catogram 视为 Telegram。</string>
+    <string name="xposed_description">让 Zepp Lift 将第三方 Telegram 客户端视为官方 Telegram。</string>
+    <string name="unsupported_title">不支持的 Zepp Life 版本</string>
+    <string name="unsupported_message">最低支持版本: %s (%d)。</string>
+    <string name="unsupported_message_notfound">无法找到包名 Map。</string>
 </resources>

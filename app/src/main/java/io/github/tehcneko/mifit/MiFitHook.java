@@ -1,11 +1,13 @@
 package io.github.tehcneko.mifit;
 
-import android.app.Application;
+import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Context;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.content.res.Resources;
+import android.content.res.XModuleResources;
 import android.util.Log;
-import android.util.Pair;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -16,56 +18,43 @@ import java.util.List;
 import dalvik.system.BaseDexClassLoader;
 import dalvik.system.DexFile;
 import de.robv.android.xposed.IXposedHookLoadPackage;
+import de.robv.android.xposed.IXposedHookZygoteInit;
 import de.robv.android.xposed.XC_MethodHook;
-import de.robv.android.xposed.XC_MethodReplacement;
 import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
 import de.robv.android.xposed.callbacks.XC_LoadPackage;
 
-public class MiFitHook implements IXposedHookLoadPackage {
+public class MiFitHook implements IXposedHookLoadPackage, IXposedHookZygoteInit {
     private static final String TAG = "MiFitHook";
+    private static final long MIN_VERSION_CODE = 50542;
+    private static final String MIN_VERSION_NAME = "6.0.0";
+
+    private static Resources moduleResources;
+
+    @Override
+    public void initZygote(StartupParam startupParam) {
+        moduleResources = XModuleResources.createInstance(startupParam.modulePath, null);
+    }
 
     @Override
     public void handleLoadPackage(XC_LoadPackage.LoadPackageParam loadPackageParam) {
         if (loadPackageParam.packageName.equals("com.xiaomi.hm.health")) {
             Log.d(TAG, "handleLoadPackage");
 
-            XposedHelpers.findAndHookMethod(Application.class, "attach", Context.class, new XC_MethodHook() {
-                @Override
-                protected void afterHookedMethod(MethodHookParam param) {
-                    var packageMapClass = findPackageMapClass(loadPackageParam.classLoader);
-                    if (packageMapClass != null) {
-                        try {
-                            XposedHelpers.findAndHookConstructor(packageMapClass, new XC_MethodHook() {
-                                @Override
-                                protected void afterHookedMethod(MethodHookParam param) {
-                                    //noinspection unchecked
-                                    var hashMap = (HashMap<String, Object>) param.thisObject;
-                                    var telegramIcon = hashMap.get("org.telegram.messenger");
-                                    if (telegramIcon != null) {
-                                        hashMap.put("tw.nekomimi.nekogram", telegramIcon);
-                                        hashMap.put("tw.nekomimi.nekogram.beta", telegramIcon);
-                                        hashMap.put("ua.itaysonlab.messenger", telegramIcon);
-                                        Log.d(TAG, "map content: " + hashMap);
-                                    }
-                                }
-                            });
-                        } catch (Throwable t) {
-                            XposedBridge.log(t);
-                        }
-                    }
-
-                    int versionCode = getAppVersionCode((Context) param.args[0]);
-                    var languageMethod = findLanguageMethod(versionCode);
-                    if (languageMethod != null) {
-                        try {
-                            XposedHelpers.findAndHookMethod(languageMethod.first, loadPackageParam.classLoader, languageMethod.second, XC_MethodReplacement.returnConstant(false));
-                        } catch (Throwable t) {
-                            XposedBridge.log(t);
-                        }
-                    }
+            var packageMap = findPackageMap(loadPackageParam.classLoader);
+            if (packageMap != null) {
+                //noinspection unchecked
+                var hashMap = (HashMap<String, Object>) packageMap;
+                var telegramIcon = hashMap.get("org.telegram.messenger");
+                if (telegramIcon != null) {
+                    hashMap.put("tw.nekomimi.nekogram", telegramIcon);
+                    hashMap.put("tw.nekomimi.nekogram.beta", telegramIcon);
+                    hashMap.put("ua.itaysonlab.messenger", telegramIcon);
+                    Log.d(TAG, "map content: " + hashMap);
                 }
-            });
+            } else {
+                hookDialog();
+            }
         }
     }
 
@@ -79,35 +68,38 @@ public class MiFitHook implements IXposedHookLoadPackage {
         }
     }
 
-    private Pair<String, String> findLanguageMethod(int versionCode) {
-        try {
-            if (ClassMaps.languageClassMap.containsKey(versionCode)) {
-                return ClassMaps.languageClassMap.get(versionCode);
-            } else {
-                return ClassMaps.languageClassMap.get(ClassMaps.maxSupportedVersion);
+    private void hookDialog() {
+        XposedBridge.hookAllMethods(Activity.class, "onCreate", new XC_MethodHook() {
+            @Override
+            protected void afterHookedMethod(MethodHookParam param) {
+                var context = (Context) param.thisObject;
+                new AlertDialog.Builder(context)
+                        .setTitle(moduleResources.getString(R.string.unsupported_title))
+                        .setMessage(getAppVersionCode(context) < MIN_VERSION_CODE ?
+                                moduleResources.getString(R.string.unsupported_message, MIN_VERSION_NAME, MIN_VERSION_CODE) :
+                                moduleResources.getString(R.string.unsupported_message_notfound))
+                        .setPositiveButton(android.R.string.ok, null)
+                        .setCancelable(false)
+                        .show();
             }
-        } catch (Throwable t) {
-            XposedBridge.log(t);
-        }
-        XposedBridge.log("language class not found");
-        return null;
+        });
     }
 
-    private Class<?> findPackageMapClass(ClassLoader classLoader) {
+    private HashMap<?, ?> findPackageMap(ClassLoader classLoader) {
         try {
             var classNames = getAllClassNamesList(classLoader);
             for (String className : classNames) {
-                if (className.startsWith("com.xiaomi.hm.health.ui.smartplay.") &&
-                        className.length() - className.replace(".", "").length() == 6 &&
-                        className.contains("$") &&
-                        !className.contains("Activity") &&
-                        !className.contains("Service")) {
+                if (className.startsWith("com.huami.device.feature.notification.appnotify.") && !className.contains("$")) {
                     var clazz = classLoader.loadClass(className);
-                    if (clazz.getSuperclass() != null && clazz.getSuperclass().equals(HashMap.class)) {
-                        var hashMap = (HashMap<?, ?>) XposedHelpers.newInstance(clazz);
-                        if (hashMap.containsKey("org.telegram.messenger")) {
-                            Log.d(TAG, "found map class: " + className);
-                            return clazz;
+                    var fields = clazz.getDeclaredFields();
+                    for (var field : fields) {
+                        if (HashMap.class.equals(field.getType())) {
+                            field.setAccessible(true);
+                            var hashMap = (HashMap<?, ?>) field.get(null);
+                            if (hashMap != null && hashMap.containsKey("org.telegram.messenger")) {
+                                Log.d(TAG, "found map field: " + className + " " + field.getName());
+                                return hashMap;
+                            }
                         }
                     }
                 }
@@ -115,7 +107,7 @@ public class MiFitHook implements IXposedHookLoadPackage {
         } catch (Throwable t) {
             XposedBridge.log(t);
         }
-        XposedBridge.log("map class not found");
+        XposedBridge.log("map field not found");
         return null;
     }
 
