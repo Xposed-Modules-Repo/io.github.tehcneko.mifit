@@ -10,8 +10,8 @@ android {
         applicationId "io.github.tehcneko.mifit"
         minSdkVersion 21
         targetSdkVersion 32
-        versionCode 6
-        versionName "1.2.1"
+        versionCode 7
+        versionName "2.0.0"
     }
 
     buildTypes {
