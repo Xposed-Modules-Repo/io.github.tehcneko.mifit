@@ -3,13 +3,13 @@ plugins {
 }
 
 android {
-    compileSdkVersion 31
-    buildToolsVersion "31.0.0"
+    compileSdkVersion 32
+    buildToolsVersion "32.0.0"
 
     defaultConfig {
         applicationId "io.github.tehcneko.mifit"
         minSdkVersion 21
-        targetSdkVersion 31
+        targetSdkVersion 32
         versionCode 6
         versionName "1.2.1"
     }
