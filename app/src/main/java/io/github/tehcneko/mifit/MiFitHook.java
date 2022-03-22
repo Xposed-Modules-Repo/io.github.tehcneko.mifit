@@ -28,6 +28,16 @@ public class MiFitHook implements IXposedHookLoadPackage, IXposedHookZygoteInit 
     private static final String TAG = "MiFitHook";
     private static final long MIN_VERSION_CODE = 50542;
     private static final String MIN_VERSION_NAME = "6.0.0";
+    private static final String[] PACKAGES = new String[]{
+            "org.telegram.messenger.web",
+            "org.telegram.messenger.beta",
+            "tw.nekomimi.nekogram",
+            "tw.nekomimi.nekogram.beta",
+            "com.cool2645.nekolite",
+            "ua.itaysonlab.messenger",
+            "org.forkclient.messenger.beta",
+            "it.owlgram.android"
+    };
 
     private static Resources moduleResources;
 
@@ -47,9 +57,9 @@ public class MiFitHook implements IXposedHookLoadPackage, IXposedHookZygoteInit 
                 var hashMap = (HashMap<String, Object>) packageMap;
                 var telegramIcon = hashMap.get("org.telegram.messenger");
                 if (telegramIcon != null) {
-                    hashMap.put("tw.nekomimi.nekogram", telegramIcon);
-                    hashMap.put("tw.nekomimi.nekogram.beta", telegramIcon);
-                    hashMap.put("ua.itaysonlab.messenger", telegramIcon);
+                    for (var packageName : PACKAGES) {
+                        hashMap.put(packageName, telegramIcon);
+                    }
                     Log.d(TAG, "map content: " + hashMap);
                 }
             } else {
