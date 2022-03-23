@@ -36,7 +36,8 @@ public class MiFitHook implements IXposedHookLoadPackage, IXposedHookZygoteInit 
             "com.cool2645.nekolite",
             "ua.itaysonlab.messenger",
             "org.forkclient.messenger.beta",
-            "it.owlgram.android"
+            "it.owlgram.android",
+            "nekox.messenger"
     };
 
     private static Resources moduleResources;
